@@ -3,6 +3,3 @@ perl -e "use Email::Valid" # Verificar si pela el modulo
 aptitude intall libemai-valid-perl
 
 mysql -h localhost -u root
-
-
-

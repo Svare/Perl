@@ -1,8 +1,12 @@
+#!/usr/bin/perl
 
 use strict;
+#use warnings;
+#use diagnostics;
+
 use 5.014; # Para usar say
-use Data::Dumper;
-use List::Util qw(min max);
+
+package DaemonCalculator;
 
 sub index_of {
 
@@ -35,6 +39,45 @@ sub index_operator {
 
 }
 
+sub operator_index {
+
+    my $heuristic = shift;              # top izq ó top derecha
+    my $number = shift;                 # numero de operadores a buscar
+    my @operators = @_[0..$number-1];   # arreglo con los operadores a buscar
+    my $index = undef;                  # indice del operador encontrado
+
+    map {
+
+        my $current_index = index_of($_, @_[$number..$#_]);
+
+        if(defined $current_index) {
+            if(!defined $index) {
+
+                $index = $current_index;
+
+            } else {
+
+                $index = ($heuristic eq 'left') ?
+                    ($index > $current_index) ? 
+                        $current_index 
+                        : 
+                        $index 
+                    : 
+                    ($index > $current_index) ? 
+                        $index 
+                        : 
+                        $current_index;
+
+            }
+        }
+
+
+    } @operators;
+
+    return $index;
+
+}
+
 sub prev_open_bracket {
 
     # Busca el parentesis mas proximo a la izquierda dada una posicion dentro de un arreglo
@@ -49,7 +92,7 @@ sub prev_open_bracket {
         $i--;
     }
 
-    return -1;
+    return undef;
 
 }
 
@@ -63,6 +106,42 @@ sub pow {
 
 sub fact {
     return (@_[0] <= 1) ? 1 : @_[0]*fact(@_[0]-1);
+}
+
+sub trigonometric {
+
+    my $index = operator_index('right', 4, 'sin', 'cos', 'tan', 'cotan', @_);
+
+    if(!defined $index || scalar(@_) eq 1) { # Caso base, si ya no hay * ó / ó la lista tiene un elemento
+        return @_;
+    } else {
+        
+        my $result;
+
+        if(@_[$index] eq 'sin') {
+            $result = sin(@_[$index + 1]);
+        } elsif(@_[$index] eq 'cos') {
+            $result = cos(@_[$index + 1]);
+        } elsif(@_[$index] eq 'tan') {
+            $result = sin(@_[$index + 1]) / cos(@_[$index + 1]);
+        } elsif(@_[$index] eq 'cotan') {
+            $result = 1 / (sin(@_[$index + 1]) / cos(@_[$index + 1]));
+        } else {
+            say "Have no idea wtf it's happening";
+        }
+
+        if(scalar(@_) eq 2) {                                               # Solo hay una operacion
+            trigonometric(($result));
+        } elsif($index eq 1) {                                              # Al principio
+            trigonometric(($result, (@_[$index+2..$#_])));
+        } elsif($index eq $#_) {                                            # Al Final
+            trigonometric(((@_[0..$index-1]), $result));
+        } else {                                                            # En Medio
+            trigonometric(((@_[0..$index-1]), $result, (@_[$index+2..$#_])));
+        }
+
+    }
+
 }
 
 sub factorial {
@@ -162,7 +241,11 @@ sub add_sub {
 }
 
 sub arithmetic {
-    return add_sub(mult_div(pot_sqrt(@_)));
+    return add_sub(mult_div(pot_sqrt(factorial(@_))));
+}
+
+sub hierarchical {
+    return add_sub(mult_div(pot_sqrt(trigonometric(factorial(@_)))));
 }
 
 sub brackets {
@@ -170,7 +253,7 @@ sub brackets {
     my $closing_bracket_index = index_of(')', @_);
 
     if(!defined $closing_bracket_index) { # Caso base ya no hay parentesis que cierra ya acabe
-        return arithmetic(@_); # Ultima pasada con aritmethic para que regrese un unico valor
+        return hierarchical(@_); # Ultima pasada con aritmethic para que regrese un unico valor
     } else {
 
         my $opening_bracket_index = prev_open_bracket($closing_bracket_index, @_);
@@ -179,69 +262,64 @@ sub brackets {
         if($opening_bracket_index eq 0 && $closing_bracket_index eq $#_) { # ( ... )
             brackets(@between_brackets);
         } elsif($opening_bracket_index eq 0 && $closing_bracket_index ne $#_) { # ( ... ) ...
-            brackets((arithmetic(@between_brackets), (@_[$closing_bracket_index+1..$#_])));
+            brackets((hierarchical(@between_brackets), (@_[$closing_bracket_index+1..$#_])));
         } elsif($opening_bracket_index ne 0 && $closing_bracket_index eq $#_) { # ... ( ... )
-            brackets(((@_[0..$opening_bracket_index-1]), arithmetic(@between_brackets)));
+            brackets(((@_[0..$opening_bracket_index-1]), hierarchical(@between_brackets)));
         } else { # ... ( ... ) ...
-            brackets(((@_[0..$opening_bracket_index-1]), arithmetic(@between_brackets), (@_[$closing_bracket_index+1..$#_])));
+            brackets(((@_[0..$opening_bracket_index-1]), hierarchical(@between_brackets), (@_[$closing_bracket_index+1..$#_])));
         }
 
     }
 
 }
 
-sub operator_index {
+1;
 
-    my $heuristic = shift;              # top izq ó top derecha
-    my $number = shift;                 # numero de operadores a buscar
-    my @operators = @_[0..$number-1];   # arreglo con los operadores a buscar
-    my $index = undef;                  # indice del operador encontrado
+=head1 NAME
 
-    map {
+DaemonCalculator - Funciones necesarias para una calculadora hecha por el mismisimo diablo.
 
-        my $current_index = index_of($_, @_[$number..$#_]);
+=head1 SYNOPSIS
 
-        if(defined $current_index) {
-            if(!defined $index) {
+    require DaemonCalculator;
+    say DaemonCalculator::brackets(split / /, @input_expression)
 
-                $index = $current_index;
+=head1 DESCRIPTION
 
-            } else {
+Este modulo hospeda a todas las funciones que fueron creadas para poder
+implementar la calculadora del diablo que trabaja con recursividad.
 
-                $index = ($heuristic eq 'left') ?
-                    ($index > $current_index) ? 
-                        $current_index 
-                        : 
-                        $index 
-                    : 
-                    ($index > $current_index) ? 
-                        $index 
-                        : 
-                        $current_index;
+=head2 Methods
 
-            }
-        }
+=over 12
 
+=item C<hierarchical>
 
-    } @operators;
+Desarrolla las expresiones que contienen factorial, potencia, raiz,
+multiplicacion, division, suma y resta.
 
-    return $index;
+Regresa el arreglo de la expresion ya simplificada.
 
-}
+=item C<brackets>
 
+Desarrolla las expresiones que contienen parentesis, factorial, potencia, raiz,
+multiplicacion, division, suma y resta.
 
+Regresa el arreglo de la expresion ya simplificada.
 
-# print("\nOpción: ");
-# my $option = <STDIN>;
-# chomp $option;
+=back
 
-#say brackets(split / /, $option);
+=head1 LICENSE
 
-#say operator_index('der', 3, 'sin', 'cos', 'tan', qw(sin ( 56 ) + cos ( 89 )));
-#say operator_index('izq', 3, 'sin', 'cos', 'tan', qw(7 + sin ( 56 ) + cos ( 89 )));
+Este modulo fue desarrollado bajo la licencia LG.
+Ver B<LG>.
 
-my $j = "hola";
+=head1 AUTHOR
 
-if($j eq "hola") {
-    say "gg man";
-}
+Svare - L<https://github.com/Svare/Perl>
+
+=head1 SEE ALSO
+
+L<https://www.ashleymadison.com/>, L<https://www.plentyofcheats.com/>
+
+=cut
