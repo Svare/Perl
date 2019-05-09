@@ -61,6 +61,33 @@ sub pow {
     return $tmp;
 }
 
+sub fact {
+    return (@_[0] <= 1) ? 1 : @_[0]*fact(@_[0]-1);
+}
+
+sub factorial {
+
+    my $index = index_of('!', @_);
+
+    if(!defined $index || scalar(@_) eq 1) { # Caso base, si ya no hay * ó / ó la lista tiene un elemento
+        return @_;
+    } else {
+
+        my $result = fact(@_[$index-1]);
+
+        if(scalar(@_) eq 2) {                                               # Solo hay una operacion
+            factorial(($result));
+        } elsif($index eq 1) {                                              # Al principio
+            factorial(($result, (@_[$index+1..$#_])));
+        } elsif($index eq $#_) {                                            # Al Final
+            factorial(((@_[0..$index-2]), $result));
+        } else {                                                            # En Medio
+            factorial(((@_[0..$index-2]), $result, (@_[$index+1..$#_])));
+        }
+
+    }
+
+}
 
 sub pot_sqrt {
 
@@ -163,8 +190,58 @@ sub brackets {
 
 }
 
-print("\nOpción: ");
-my $option = <STDIN>;
-chomp $option;
+sub operator_index {
 
-say brackets(split / /, $option);
+    my $heuristic = shift;              # top izq ó top derecha
+    my $number = shift;                 # numero de operadores a buscar
+    my @operators = @_[0..$number-1];   # arreglo con los operadores a buscar
+    my $index = undef;                  # indice del operador encontrado
+
+    map {
+
+        my $current_index = index_of($_, @_[$number..$#_]);
+
+        if(defined $current_index) {
+            if(!defined $index) {
+
+                $index = $current_index;
+
+            } else {
+
+                $index = ($heuristic eq 'left') ?
+                    ($index > $current_index) ? 
+                        $current_index 
+                        : 
+                        $index 
+                    : 
+                    ($index > $current_index) ? 
+                        $index 
+                        : 
+                        $current_index;
+
+            }
+        }
+
+
+    } @operators;
+
+    return $index;
+
+}
+
+
+
+# print("\nOpción: ");
+# my $option = <STDIN>;
+# chomp $option;
+
+#say brackets(split / /, $option);
+
+#say operator_index('der', 3, 'sin', 'cos', 'tan', qw(sin ( 56 ) + cos ( 89 )));
+#say operator_index('izq', 3, 'sin', 'cos', 'tan', qw(7 + sin ( 56 ) + cos ( 89 )));
+
+my $j = "hola";
+
+if($j eq "hola") {
+    say "gg man";
+}
