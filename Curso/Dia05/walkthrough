@@ -1,5 +1,5 @@
-perl -MCPAN -e "install Email::Valid"
-perl -e "use Email::Valid" # Verificar si pela el modulo
+perl -MCPAN -e "install Module::Build"
+perl -e "use Net::SSH::Expect" # Verificar si pela el modulo
 aptitude intall libemai-valid-perl
 
 mysql -h localhost -u root

@@ -1,7 +1,7 @@
 
 # Jesus Enrique Pacheco Franco
 
-#use strict;
+use strict;
 use Socket;
 use Data::Dumper;
 use 5.014;
