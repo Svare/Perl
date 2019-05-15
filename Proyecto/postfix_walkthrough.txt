@@ -1,0 +1,20 @@
+[ postfix walkthrough ]
+
+web_page : 					https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-postfix-on-ubuntu-16-04
+problema_al_enviar_correo:	https://www.reddit.com/r/linuxadmin/comments/8l8oxf/postfix_with_snailmailxmailutils/
+
+sudo ufw allow Postfix #No lo he hecho
+source /etc/profile.d/mail.sh #Cargar la variable de ambiente MAIL
+
+no fue necesario configurar nada del firewall ni recargar el valor de la variable MAIL.
+
+$ echo 'init' | mail -s 'init' -Snorecord ginger 	# Este comando falló, se debe sustituir por:
+$ echo 'init' | s-nail -s 'init' -Snorecord ginger 	# Tambien falla por que debemos crear el directorio ~/Maildir
+													  una vez que se crea el directorio todo funciona correctamente.
+
+
+[LOG PATH]
+
+	/var/log/mail.log
+
+Thats it.
